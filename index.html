@@ -18,7 +18,9 @@
     button { background: #ffa07a; border: none; padding: 10px 20px; color: #000; border-radius: 5px; cursor: pointer; margin: 0 10px; }
     #result { margin-top: 20px; background: #3c3c3c; padding: 15px; border-radius: 5px; }
 
-    /* 手機響應式樣式 */
+    ul { padding-left: 20px; }
+    ul li { margin-bottom: 5px; }
+
     @media screen and (max-width: 600px) {
       label {
         width: 100%;
@@ -75,10 +77,9 @@
         items: [
           { name: "染髮", time: 120, prices: ["短 2800","中 3000","長 3200","極長 3500"] },
           { name: "挑染", time: 90, prices: ["頂區 1000","半頭 2000","全頭 3000"] },
-          { name: "漂髮", time: 120, prices: ["500","1000"] },
           { name: "設計染髮", time: 120, prices: [] },
           { name: "AirTouch", time: 480, prices: ["短 8000","中 10000","長 12000","極長 15000"] },
-          { name: "髮根補染（不含剪）", time: 120, prices: ["半頭 1200","全頭 1800"] }
+          { name: "髮根補染（不含剪）", time: 120, prices: ["全頭3cm 1800"] }
         ]
       },
       {
@@ -87,7 +88,8 @@
           { name: "素髮美人修護", time: 60, prices: ["2000"] },
           { name: "Bond RX 超鏈結護髮", time: 60, prices: ["2000"] },
           { name: "IAU 細胞修護", time: 60, prices: ["短 1800","中 2000","長 2200","極長 2500"] },
-          { name: "IAU 髮膜修護", time: 60, prices: ["短 1200","中 1400","長 1600","極長 1800"] }
+          { name: "IAU 髮膜修護", time: 60, prices: ["短 1200","中 1400","長 1600","極長 1800"] },
+          { name: "AWG胺瓶修護", time: 60, prices: ["1200"] }
         ]
       },
       {
@@ -102,7 +104,7 @@
         category: "洗髮",
         items: [
           { name: "健康洗髮", time: 45, prices: ["400"] },
-          { name: "夾捲/夾直", time: 20, prices: ["100", "200"] }
+          { name: "夾捲/夾直", time: 20, prices: ["200"] }
         ]
       },
       {
@@ -111,10 +113,7 @@
           { name: "剪髮", time: 60, prices: ["600"] },
           { name: "大學生剪髮", time: 60, prices: ["500"] },
           { name: "高中生剪髮", time: 60, prices: ["400"] },
-          { name: "國中生剪髮", time: 60, prices: ["350"] },
-          { name: "國小生剪髮", time: 60, prices: ["300"] },
-          { name: "幼稚園剪髮", time: 60, prices: ["250"] },
-          { name: "學齡前剪髮", time: 60, prices: ["200"] }
+          { name: "國中生以下剪髮", time: 60, prices: ["350"] }
         ]
       },
       {
@@ -153,8 +152,9 @@
         category: "燙染加購優惠",
         items: [
           { name: "素髮美人修護", time: 15, prices: ["1000"] },
-          { name: "Bond RX 超鏈結護髮", time: 15, prices: ["1000"] }
-        ]
+          { name: "Bond RX 超鏈結護髮", time: 15, prices: ["1000"] },
+          { name: "漂髮", time: 60, prices: ["一次 1000","二次 2000","三次 3000"] }
+          ]
       }
     ];
 
@@ -168,10 +168,13 @@
       group.items.forEach(item => {
         const div = document.createElement("div");
         div.className = "service";
-        const options = item.prices.map(p => `<option value="${p.match(/\d+/g)?.[0] || 0}">${p} 元</option>`).join("");
+        const options = item.prices.map(p => {
+          const value = p.match(/\d+/g)?.pop() || 0;
+          return `<option value="${value}">${p} 元</option>`;
+        }).join("");
         div.innerHTML = `
           <label>${item.name} (${item.time} 分鐘)</label>
-          <select data-time="${item.time}" onchange="toggleCustom(this)">
+          <select data-time="${item.time}" data-name="${item.name}" onchange="toggleCustom(this)">
             <option value="0">不選擇</option>
             ${options}
             <option value="custom">自訂價格</option>
@@ -197,11 +200,13 @@
     function calculate() {
       let totalTime = 0;
       let totalPrice = 0;
+      let selectedServices = [];
 
       document.querySelectorAll('.service').forEach(service => {
         const select = service.querySelector('select');
         const input = service.querySelector('input');
         const time = parseInt(select.dataset.time);
+        const name = select.dataset.name;
         const value = select.value;
 
         let price = 0;
@@ -214,15 +219,18 @@
         if (price > 0) {
           totalTime += time;
           totalPrice += price;
+          selectedServices.push(`${name} - ${price} 元`);
         }
       });
 
       const hours = (totalTime / 60).toFixed(1);
 
-      document.getElementById('result').innerHTML = `
+      const result = document.getElementById('result');
+      result.innerHTML = `
         <p><strong>報價結果</strong></p>
         <p>總金額：${totalPrice} 元</p>
         <p>總服務時間：${totalTime} 分鐘（約 ${hours} 小時）</p>
+        ${selectedServices.length > 0 ? `<p>已選項目：</p><ul>${selectedServices.map(s => `<li>${s}</li>`).join('')}</ul>` : ""}
       `;
     }
 
